@@ -29,7 +29,7 @@ def extract_city_name(filename: str) -> str:
     elif parts[-2][-1] == '시':    # 형식: ..._수원시_YYYYMM
         return parts[-2]
     else:
-        raise ValueError(f"❌ 시군명을 찾을 수 없습니다: {filename}")
+        raise ValueError(f"시군명을 찾을 수 없습니다: {filename}")
 
 # CSV 읽기 함수 (UTF-8 → cp949 fallback)
 def read_csv_flexible(file_path: str) -> pd.DataFrame:
@@ -53,7 +53,7 @@ for file in files:
 
             # 날짜 처리
             if 'ta_ymd' not in df.columns:
-                print(f"[❌ 누락] 'ta_ymd' 없음: {file}")
+                print(f"[누락] 'ta_ymd' 없음: {file}")
                 continue
 
             df['ta_ymd'] = pd.to_datetime(df['ta_ymd'], format='%Y%m%d', errors='coerce')
@@ -486,7 +486,7 @@ importances = et.feature_importances_
 indices = np.argsort(importances)[::-1]
 features = X.columns
 
-# 👉 한글 라벨 적용
+# 한글 라벨 적용
 feature_labels = [label_map.get(f, f) for f in features[indices]]
 
 # 시각화
@@ -497,5 +497,6 @@ plt.xlabel("중요도")
 plt.ylabel("변수명")
 plt.tight_layout()
 plt.show()
+
 
 #---------------------------------------------------------------------------------------------
