@@ -1,0 +1,23 @@
+# 데이터 처리 및 분석
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+
+# 머신러닝
+scikit-learn>=1.3.0
+lightgbm>=4.0.0
+xgboost>=2.0.0
+shap>=0.42.0
+
+# 시각화
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+
+# 노트북 환경
+jupyter>=1.0.0
+notebook>=7.0.0
+
+# 기타 유틸리티
+python-dotenv>=1.0.0
+tqdm>=4.65.0
