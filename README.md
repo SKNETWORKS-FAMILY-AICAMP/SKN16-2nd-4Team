@@ -196,7 +196,7 @@ python src/models/merge_n_learning.py
 - **일반화 성능**: 과적합 없이 안정적 성능 유지
 
 ### 🔍 변수 중요도 분석
-![변수 중요도 분석 결과](assets\visualization\model\model_04.webp)
+![변수 중요도 분석 결과](assets/visualization/model/model_04.webp)
 
 #### 주요 변수 기여도
 1. **브랜드 평판지수** - 가장 높은 중요도
