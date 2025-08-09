@@ -21,3 +21,7 @@ notebook>=7.0.0
 # 기타 유틸리티
 python-dotenv>=1.0.0
 tqdm>=4.65.0
+pyproj
+openpyxl
+geopandas
+shapely

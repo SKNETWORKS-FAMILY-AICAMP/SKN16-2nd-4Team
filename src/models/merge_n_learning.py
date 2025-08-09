@@ -1,6 +1,23 @@
+import platform
+import ctypes
+if platform.system() == 'Darwin':
+    try:
+        ctypes.CDLL('libomp.dylib')
+    except OSError:
+        print("""
+[경고] macOS에서 LightGBM 실행에 필요한 OpenMP 라이브러리(libomp.dylib)가 없습니다.
+
+아래 명령어로 설치 후, VS Code를 완전히 종료했다가 다시 실행하거나 터미널을 재시작하세요:
+
+    brew install libomp
+
+Homebrew가 없다면 https://brew.sh/ 참고
+""")
+
 # 2025-08-05 ~ 2025-08-06 데이터 병합 및 전처리, 모델 학습 + 시각화 코드
 import pandas as pd
 import numpy as np
+import sys
 import os
 import glob
 import matplotlib.pyplot as plt
@@ -14,9 +31,27 @@ from lightgbm import LGBMRegressor
 
 #--------------------------------------------------------------------------------------------------------
 # 한글 폰트 설정
-font_path = "C:/Windows/Fonts/malgun.ttf"
-font_prop = fm.FontProperties(fname=font_path)
-plt.rc('font', family=font_prop.get_name())
+def set_korean_font():
+    try:
+        # Colab 환경 (나눔고딕)
+        import matplotlib.font_manager as fm
+        font_path = '/usr/share/fonts/truetype/nanum/NanumGothic.ttf'
+        if os.path.exists(font_path):
+            plt.rcParams['font.family'] = 'NanumGothic'
+            return
+    except:
+        pass
+    # macOS
+    if sys.platform == 'darwin':
+        plt.rcParams['font.family'] = 'AppleGothic'
+    # Windows
+    elif sys.platform.startswith('win'):
+        plt.rcParams['font.family'] = 'Malgun Gothic'
+    # 기타(리눅스 등)
+    else:
+        plt.rcParams['font.family'] = 'DejaVu Sans'
+
+set_korean_font()
 plt.rcParams['axes.unicode_minus'] = False
 #--------------------------------------------------------------------------------------------------------
 
@@ -41,7 +76,7 @@ def read_csv_flexible(file_path: str) -> pd.DataFrame:
 #--------------------------------------------------------------------------------------------------------
 
 # 데이터 폴더 지정
-data_folder = r'your_card_consumption_data_folder'  # 실제 데이터 폴더 경로로 변경
+data_folder = r'data/raw/카드소비'  # 실제 데이터 폴더 경로로 변경
 files = glob.glob(os.path.join(data_folder, "*.csv"))
 
 # 전체 데이터 수집
@@ -87,7 +122,7 @@ card_agg['avg_amt_per_cnt'] = card_agg['total_amt'] / card_agg['total_cnt']
 #--------------------------------------------------------------------------------------------------------
 
 # 영업/폐업 데이터 로드 및 전처리
-store_df = pd.read_csv(r'your_cafe_data_file', encoding='cp949')
+store_df = pd.read_csv(r'data/processed/cafe_data.csv', encoding='utf-8')
 store_df['인허가일자'] = pd.to_datetime(store_df['인허가일자'], errors='coerce')
 store_df['폐업일자'] = pd.to_datetime(store_df['폐업일자'], errors='coerce')
 store_df['region'] = store_df['소재지전체주소'].str.extract(r'경기도\s(\S+?)[\s,]')
@@ -103,7 +138,7 @@ close_count = store_df.groupby(['region', 'close_ym']).size().reset_index(name='
 #--------------------------------------------------------------------------------------------------------
 
 # 브랜드 평판 지수 전처리
-brand_df = pd.read_csv(r'your_brand_reputation_file', encoding='cp949')
+brand_df = pd.read_csv(r'data/processed/brand.csv', encoding='utf-8')
 
 # 열 이름에서 날짜 추출
 value_cols = [col for col in brand_df.columns if '브랜드평판지수' in col]
@@ -131,7 +166,7 @@ df_merge[['n_open', 'n_close']] = df_merge[['n_open', 'n_close']].fillna(0)
 # 브랜드 평판 지수는 전체 지역에 공통 적용
 df_merge = df_merge.merge(brand_top1, on='ym', how='left')
 
-save_path = r'C:\develop\AI_camp\project2\merged_data.csv'
+save_path = r'data/processed/merged_data.csv'
 df_merge.to_csv(save_path, index=False, encoding='utf-8-sig')
 print(f"[저장 완료] {save_path}")
 
@@ -177,7 +212,7 @@ df['brand_index_change'] = df['top1_brand_index'].pct_change()
 #--------------------------------------------------------------------------------------------------------
 
 # 원두 데이터 불러오기
-bean_df = pd.read_csv(r'your_coffee_bean_data')
+bean_df = pd.read_csv(r'data/processed/coffee_bean_comparison.csv')
 
 # 컬럼명 정리 (필요시)
 bean_df.rename(columns={
@@ -201,7 +236,7 @@ df = df.merge(bean_df[['year', 'weighted_price', 'weighted_price_change']], on='
 #--------------------------------------------------------------------------------------------------------
 
 # 최저임금 데이터 불러오기
-wage_df = pd.read_csv(r'your_wage_data')  # 파일 경로 맞게 수정
+wage_df = pd.read_csv(r'data/processed/wage.csv')  # 파일 경로 맞게 수정
 
 # 컬럼명 정리
 wage_df.rename(columns={
@@ -218,8 +253,8 @@ df = df.merge(wage_df, on='year', how='left')
 # 소규모 임대료 데이터 불러오기 및 계절 기준 확장
 
 # 불러오기
-rent_small_df = pd.read_csv(r'your_small_rent_file', encoding='cp949')
-rent_big_df = pd.read_csv(r'your_big_rent_file', encoding='cp949')
+rent_small_df = pd.read_csv(r'data/processed/rent_small.csv', encoding='cp949')
+rent_big_df = pd.read_csv(r'data/processed/rent_mid_big.csv', encoding='cp949')
 
 # '지역(추출)' 열 기반으로 region 정리 + '시' 붙이기
 rent_small_df['region'] = rent_small_df['지역(추출)'].astype(str).str.strip() + '시'
@@ -300,7 +335,7 @@ df['rent_cost_small'] = df['rent_small'] * avg_area
 df['rent_cost_big'] = df['rent_big'] * avg_area
 
 # 원하는 방식에 따라 선택 or 평균
-# df['avg_rent_cost'] = df[['rent_cost_small', 'rent_cost_big']].mean(axis=1)
+df['avg_rent_cost'] = df[['rent_cost_small', 'rent_cost_big']].mean(axis=1)
 
 # 고정비 계산
 df['fixed_cost'] = df['min_wage'] + df['weighted_price'] + df['avg_rent_cost']
